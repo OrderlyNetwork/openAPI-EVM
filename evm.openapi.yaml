@@ -680,8 +680,8 @@ paths:
       parameters:
         - name: symbol
           in: query
-          description: ''
-          required: true
+          description: 'omit to get funding fee history for all symbols'
+          required: false
           example: PERP_ETH_USDC
           schema:
             type: string
@@ -7330,7 +7330,6 @@ components:
               - expiration
               - orderly_key
               - scope
-              - tag
               properties:
                 orderly_key:
                   type: string
@@ -7349,7 +7348,6 @@ components:
       required:
         - message
         - signature
-        - tag
         - userAddress
       properties:
         message:
@@ -7398,7 +7396,6 @@ components:
       required:
       - message
       - signature
-      - tag
       - userAddress
       properties:
         message:
