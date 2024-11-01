@@ -562,7 +562,8 @@ paths:
     get:
       summary: Get Order Rules per Symbol
       deprecated: false
-      description: "
+      description: |
+        
         **Limit: 10 requests per 1 second per IP address**
 
 
@@ -606,8 +607,8 @@ paths:
 
 
         - Order size should be within holding threshold. See
-        [account_info](/build-on-evm/evm-api/restful-api/get-account-information)
-        "
+        [account_info](/docs/build-on-evm/evm-api/restful-api/private/get-account-information)
+
       tags:
         - public
       parameters:
@@ -662,7 +663,7 @@ paths:
 
 
         Get available symbols that Orderly Network supports, and also send order
-        rules for each symbol. The definition of rules can be found at [Get Order Rules per Market](/build-on-evm/evm-api/restful-api/public/get-order-rules-per-market)
+        rules for each symbol. The definition of rules can be found at [Get Order Rules per Market](/docs/build-on-evm/evm-api/restful-api/public/get-order-rules-per-symbol)
       tags:
         - public
       parameters: []
@@ -2718,6 +2719,119 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PnlSettlementHistoryResponse"
+
+  /v1/internal_transfer:
+    post:
+      summary: Create Internal Transfer
+      deprecated: false
+      description: |
+        **Limit: 10 requests per 1 second**
+
+        `POST /v1/internal_transfer`
+
+        Orderly key must has `asset` scope to access this endpoint.
+      tags:
+        - private
+      parameters:
+        - $ref: "#/components/parameters/orderly_timestamp"
+        - $ref: "#/components/parameters/orderly_account_id"
+        - $ref: "#/components/parameters/orderly_key"
+        - $ref: "#/components/parameters/orderly_signature"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInternalTransferRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BasicResponse"
+
+
+  /v1/internal_transfer_history:
+    get:
+      summary: Get Internal Transfer History
+      deprecated: false
+      description: |
+        **Limit: 10 requests per 1 second**
+
+        `GET /v1/internal_transfer_history`
+        
+        Orderly key must has `asset` scope to access this endpoint.
+      tags:
+        - private
+      parameters:
+        - name: status
+          in: query
+          description: "`CREATED`/`PENDING`/`COMPLETED`/`FAILED`"
+          required: false
+          example: ""
+          schema:
+            type: string
+        - name: start_t
+          in: query
+          description: ""
+          required: false
+          example: ""
+          schema:
+            type: string
+        - name: end_t
+          in: query
+          description: ""
+          required: false
+          example: ""
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: ""
+          required: false
+          example: ""
+          schema:
+            type: number
+        - name: size
+          in: query
+          description: ""
+          required: false
+          example: ""
+          schema:
+            type: number
+        - name: side
+          in: query
+          description: "`IN`/`OUT`"
+          required: true
+          example: ""
+          schema:
+            type: string
+        - name: from_account_id
+          in: query
+          description: ""
+          required: false
+          example: ""
+          schema:
+            type: string
+        - name: to_account_id
+          in: query
+          description: ""
+          required: false
+          example: ""
+          schema:
+            type: string
+        - $ref: "#/components/parameters/orderly_timestamp"
+        - $ref: "#/components/parameters/orderly_account_id"
+        - $ref: "#/components/parameters/orderly_key"
+        - $ref: "#/components/parameters/orderly_signature"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetInternalTransferHistoryResponse"
+
   /v1/client/key_info:
     get:
       summary: Get Current Orderly Key Info
@@ -3096,7 +3210,10 @@ paths:
         order and is filled at the next available market price.
 
 
-        To place `Positional TP/SL` order, the input fields is 2 layer and includes an array of the objects named childOrder. The take-profit or stop-loss order should be the objects in the array. For the sub-order in childOrder, please input 'CLOSE_POSITION' as type, and 'TAKE_PROFIT' or 'STOP_LOSS' in algoType field.
+        To place `Positional TP/SL` order, the input fields is 2 layer and includes an array of the objects named childOrder. The take-profit or stop-loss order should be the objects in the array. For the sub-order in childOrder, please input `CLOSE_POSITION` as type, and `TAKE_PROFIT` or `STOP_LOSS` in algoType field.
+
+
+        Sample request can be found [here](/docs/build-on-evm/algo-order-samples)
 
 
         Note: This endpoint requires trading scope in Orderly Key.
@@ -3150,21 +3267,85 @@ paths:
                 order_tag:
                   type: string
                 child_orders:
-                  type: object
-                  properties:
-                    symbol:
-                      type: string
-                      example: "PERP_ETH_USDC"
-                    algo_type:
-                      type: string
-                      example: "POSITIONAL_TP_SL"
-                    child_orders:
-                      type: array
-                      items:
-                        $ref: "#/components/schemas/CreateAlgoOrderChildRequest"
-                      description: "Array of `CreateAlgoOrderChildRequest`"
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      symbol:
+                        type: string
+                      algo_type:
+                        type: string
+                      child_orders:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/CreateAlgoOrderChildRequest"
+                        description: "Array of `CreateAlgoOrderChildRequest`"
+              example:
+                - symbol: "PERP_ETH_USDC"
+                  algo_type: "BRACKET"
+                  quantity: 0.0032
+                  side: "BUY"
+                  type: "LIMIT"
+                  price: 3415.9
+                  child_orders:
+                    - symbol: "PERP_ETH_USDC"
+                      algo_type: "POSITIONAL_TP_SL"
+                      child_orders:
+                        - symbol: "PERP_ETH_USDC"
+                          algo_type: "TAKE_PROFIT"
+                          side: "SELL"
+                          type: "CLOSE_POSITION"
+                          trigger_price: 3518.4
+                          reduce_only: true
+                        - symbol: "PERP_ETH_USDC"
+                          algo_type: "STOP_LOSS"
+                          side: "SELL"
+                          type: "CLOSE_POSITION"
+                          trigger_price: 3313.4
+                          reduce_only: true
+                - symbol: "PERP_NEAR_USDC"
+                  algo_type: "TP_SL"
+                  quantity: 5.5
+                  trigger_price_type: "MARK_PRICE"
+                  child_orders:
+                    - symbol: "PERP_NEAR_USDC"
+                      algo_type: "TAKE_PROFIT"
+                      side: "SELL"
+                      type: "MARKET"
+                      trigger_price: 3.365
+                      reduce_only: true
+                    - symbol: "PERP_NEAR_USDC"
+                      algo_type: "STOP_LOSS"
+                      side: "SELL"
+                      type: "MARKET"
+                      trigger_price: 3.36
+                      reduce_only: true
+                - symbol: "PERP_NEAR_USDC"
+                  algo_type: "POSITIONAL_TP_SL"
+                  trigger_price_type: "MARK_PRICE"
+                  child_orders:
+                    - symbol: "PERP_NEAR_USDC"
+                      algo_type: "TAKE_PROFIT"
+                      side: "SELL"
+                      type: "CLOSE_POSITION"
+                      trigger_price_type: "MARK_PRICE"
+                      trigger_price: 4.05
+                      reduce_only: true
+                    - symbol: "PERP_NEAR_USDC"
+                      algo_type: "STOP_LOSS"
+                      side: "SELL"
+                      type: "CLOSE_POSITION"
+                      trigger_price_type: "MARK_PRICE"
+                      trigger_price: 3.95
+                      reduce_only: true
+
               required:
                 - symbol
+                - algo_type
+                - quantity
+                - side
+                - type
+                - child_orders
       responses:
         "200":
           description: OK
@@ -7370,6 +7551,52 @@ components:
                         type: number
                         example: 1682235722003
 
+
+    GetInternalTransferHistoryResponse:
+      allOf:
+        - $ref: "#/components/schemas/BasicResponse"
+        - type: object
+          required:
+            - data
+          properties:
+            data:
+              type: object
+              required:
+                - meta
+                - rows
+              properties:
+                meta:
+                  $ref: "#/components/schemas/PaginationMeta"
+                rows:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: "230707030600002"
+                      token:
+                        type: string
+                        example: "USDC"
+                      amount:
+                        type: number
+                        example: 555,
+                      from_account_id:
+                        type: string
+                        example: "0x000000"
+                      to_account_id:
+                        type: string
+                        example: "0x000000"
+                      status:
+                        type: string
+                        example: "FAILED"
+                      created_time:
+                        type: number
+                        example: 1688699193034
+                      updated_time:
+                        type: number
+                        example: 1688699193034
+
     LiquidatorLiquidationsResponse:
       allOf:
         - $ref: "#/components/schemas/BasicResponse"
@@ -7605,6 +7832,25 @@ components:
                 status:
                   type: string
                   example: "EDIT_SENT"
+
+
+    CreateInternalTransferRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "USDC"
+        receiver_list:
+          type: object
+          description: "Maximum 50 receivers per request, transferring to yourself will lead to request failure. "
+          properties:
+            account_id:
+              type: string
+              example: "0x0000000"
+            amount:
+              type: number
+              example: 100
+
 
     PostOrderBody:
       required:
